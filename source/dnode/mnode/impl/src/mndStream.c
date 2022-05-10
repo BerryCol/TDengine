@@ -406,11 +406,11 @@ static int32_t mndCreateStream(SMnode *pMnode, SNodeMsg *pReq, SCMCreateStreamRe
     return -1;
   }
 
-  if (streamObj.targetSTbName[0] && mndCreateStbForStream(pMnode, pTrans, &streamObj, pReq->user) < 0) {
-    mError("trans:%d, failed to create stb for stream since %s", pTrans->id, terrstr());
-    mndTransDrop(pTrans);
-    return -1;
-  }
+  // if (streamObj.targetSTbName[0] && mndCreateStbForStream(pMnode, pTrans, &streamObj, pReq->user) < 0) {
+  //   mError("trans:%d, failed to create stb for stream since %s", pTrans->id, terrstr());
+  //   mndTransDrop(pTrans);
+  //   return -1;
+  // }
 
   if (mndTransPrepare(pMnode, pTrans) != 0) {
     mError("trans:%d, failed to prepare since %s", pTrans->id, terrstr());

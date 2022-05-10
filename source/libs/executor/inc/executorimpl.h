@@ -375,6 +375,12 @@ typedef struct STagScanInfo {
   STableGroupInfo *pTableGroups;
 } STagScanInfo;
 
+typedef enum EStreamScanMode {
+  STREAM_SCAN_FROM_READERHANDLE = 1,
+  STREAM_SCAN_FROM_ARRAY,
+  STREAM_SCAN_FROM_DATAREADER,
+} EStreamScanMode;
+
 typedef struct SStreamBlockScanInfo {
   SArray*      pBlockLists;      // multiple SSDatablock.
   SSDataBlock* pRes;             // result SSDataBlock
@@ -387,8 +393,11 @@ typedef struct SStreamBlockScanInfo {
   SArray*      pColMatchInfo;    //
   SNode*       pCondition;
   SArray*      tsArray;
-  SUpdateInfo*  pUpdateInfo;
+  SUpdateInfo* pUpdateInfo;
   int32_t      primaryTsIndex;    // primary time stamp slot id
+  void*        pDataReader;
+  EStreamScanMode scanMode;
+  SQueryTableDataCond cond;
 } SStreamBlockScanInfo;
 
 typedef struct SSysTableScanInfo {
@@ -690,8 +699,8 @@ SOperatorInfo* createGroupOperatorInfo(SOperatorInfo* downstream, SExprInfo* pEx
                                        SExprInfo* pScalarExprInfo, int32_t numOfScalarExpr, SExecTaskInfo* pTaskInfo,
                                        const STableGroupInfo* pTableGroupInfo);
 SOperatorInfo* createDataBlockInfoScanOperator(void* dataReader, SExecTaskInfo* pTaskInfo);
-SOperatorInfo* createStreamScanOperatorInfo(void* streamReadHandle, SSDataBlock* pResBlock, SArray* pColList,
-                                            SArray* pTableIdList, SExecTaskInfo* pTaskInfo, SNode* pConditions);
+SOperatorInfo* createStreamScanOperatorInfo(void* streamReadHandle, void* pDataReader, SSDataBlock* pResBlock, SArray* pColList,
+                                            SArray* pTableIdList, SExecTaskInfo* pTaskInfo, SNode* pConditions, SQueryTableDataCond* pCond);
 
 SOperatorInfo* createFillOperatorInfo(SOperatorInfo* downstream, SExprInfo* pExpr, int32_t numOfCols,
                                       SInterval* pInterval, STimeWindow* pWindow, SSDataBlock* pResBlock, int32_t fillType, SNodeListNode* fillVal,

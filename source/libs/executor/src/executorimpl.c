@@ -4792,9 +4792,21 @@ SOperatorInfo* createOperatorTree(SPhysiNode* pPhyNode, SExecTaskInfo* pTaskInfo
       return createExchangeOperatorInfo(pHandle->pMsgCb->clientRpc, pExchange->pSrcEndPoints, pResBlock, pTaskInfo);
     } else if (QUERY_NODE_PHYSICAL_PLAN_STREAM_SCAN == type) {
       SScanPhysiNode* pScanPhyNode = (SScanPhysiNode*)pPhyNode;  // simple child table.
+      STableScanPhysiNode* pTableScanNode = (STableScanPhysiNode*)pPhyNode;
 
-      int32_t code = doCreateTableGroup(pHandle->meta, pScanPhyNode->tableType, pScanPhyNode->uid, pTableGroupInfo,
-                                        queryId, taskId);
+      tsdbReaderT pDataReader = doCreateDataReader(pTableScanNode, pHandle, pTableGroupInfo, (uint64_t)queryId, taskId);
+      if (pDataReader == NULL && terrno != 0) {
+        return NULL;
+      }
+
+      SQueryTableDataCond cond = {0};
+      int32_t code = initQueryTableDataCond(&cond, pTableScanNode);
+      if (code != TSDB_CODE_SUCCESS) {
+        return NULL;
+      }
+
+      // int32_t code = doCreateTableGroup(pHandle->meta, pScanPhyNode->tableType, pScanPhyNode->uid, pTableGroupInfo,
+      //                                   queryId, taskId);
       SArray* tableIdList = extractTableIdList(pTableGroupInfo);
 
       SDataBlockDescNode* pDescNode = pScanPhyNode->node.pOutputDataBlockDesc;
@@ -4802,8 +4814,8 @@ SOperatorInfo* createOperatorTree(SPhysiNode* pPhyNode, SExecTaskInfo* pTaskInfo
 
       int32_t        numOfCols = 0;
       SArray*        pCols = extractColMatchInfo(pScanPhyNode->pScanCols, pDescNode, &numOfCols, COL_MATCH_FROM_COL_ID);
-      SOperatorInfo* pOperator = createStreamScanOperatorInfo(pHandle->reader, pResBlock, pCols, tableIdList, pTaskInfo,
-                                                              pScanPhyNode->node.pConditions);
+      SOperatorInfo* pOperator = createStreamScanOperatorInfo(pHandle->reader, pDataReader, pResBlock, pCols, tableIdList, pTaskInfo,
+                                                              pScanPhyNode->node.pConditions, &cond);
       taosArrayDestroy(tableIdList);
       return pOperator;
     } else if (QUERY_NODE_PHYSICAL_PLAN_SYSTABLE_SCAN == type) {
